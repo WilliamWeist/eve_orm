@@ -60,7 +60,6 @@ pub fn get_all() -> HashMap<u64, System> {
             Ok(value) => security_status = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
         }
-        let security_status: f64 = (security_status * 10.0).round() / 10.0;
         let x: f64;
         match row.get(3) {
             Ok(value) => x = value,
@@ -151,7 +150,6 @@ pub fn get(id: &u64) -> Option<System> {
                     Ok(value) => security_status = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
                 }
-                let security_status: f64 = (security_status * 10.0).round() / 10.0;
                 let x: f64;
                 match row.get(2) {
                     Ok(value) => x = value,
