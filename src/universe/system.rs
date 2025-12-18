@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct System {
     pub id: u64,
     pub name: String,
@@ -203,6 +203,9 @@ pub fn search(search_query: &str, cache: Option<&HashMap<u64, System>>) -> Vec<S
         None => systems_map = get_all(),
     }
     let search_query: &str = &search_query.to_lowercase().replace("-", "");
+    if search_query.chars().count() < 3 {
+        return systems;
+    }
     for system_map in systems_map {
         let system_name: &str = &system_map.1.name.to_lowercase().replace("-", "");
         if system_name.starts_with(search_query) {
@@ -212,4 +215,160 @@ pub fn search(search_query: &str, cache: Option<&HashMap<u64, System>>) -> Vec<S
     systems.sort_by(|s1, s2| s1.name.cmp(&s2.name));
 
     systems
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::universe::{
+        Position,
+        constellation::Constellation,
+        galaxy::Galaxy,
+        region::Region,
+        stargate::Stargate,
+        system::{self, System},
+    };
+
+    #[test]
+    fn get_ok() {
+        let system: Option<System> = system::get(&30000001);
+        let target: System = System {
+            id: 30000001,
+            name: "Tanoo".to_string(),
+            security_status: 0.858324,
+            position: Position {
+                x: -8.85107925999806e+16,
+                y: 4.23694439668789e+16,
+                z: -4.45135253464797e+16,
+            },
+            constellation: Constellation {
+                id: 20000001,
+                name: "San Matar".to_string(),
+                region: Region {
+                    id: 10000001,
+                    name: "Derelik".to_string(),
+                    galaxy: Galaxy {
+                        id: 1,
+                        name: "NEW EDEN".to_string(),
+                    },
+                },
+            },
+            stargates: Vec::from([
+                Stargate {
+                    destination_id: 30000003,
+                    destination_name: "Akpivem".to_string(),
+                },
+                Stargate {
+                    destination_id: 30000005,
+                    destination_name: "Sasta".to_string(),
+                },
+                Stargate {
+                    destination_id: 30000007,
+                    destination_name: "Yuzier".to_string(),
+                },
+            ]),
+        };
+        assert_eq!(system, Some(target))
+    }
+
+    #[test]
+    fn get_none() {
+        let system: Option<System> = system::get(&1321412421);
+        assert_eq!(system, None);
+    }
+
+    #[test]
+    fn search_exact() {
+        let system: Vec<System> = system::search("Tanoo", None);
+        let target: System = System {
+            id: 30000001,
+            name: "Tanoo".to_string(),
+            security_status: 0.858324,
+            position: Position {
+                x: -8.85107925999806e+16,
+                y: 4.23694439668789e+16,
+                z: -4.45135253464797e+16,
+            },
+            constellation: Constellation {
+                id: 20000001,
+                name: "San Matar".to_string(),
+                region: Region {
+                    id: 10000001,
+                    name: "Derelik".to_string(),
+                    galaxy: Galaxy {
+                        id: 1,
+                        name: "NEW EDEN".to_string(),
+                    },
+                },
+            },
+            stargates: Vec::from([
+                Stargate {
+                    destination_id: 30000003,
+                    destination_name: "Akpivem".to_string(),
+                },
+                Stargate {
+                    destination_id: 30000005,
+                    destination_name: "Sasta".to_string(),
+                },
+                Stargate {
+                    destination_id: 30000007,
+                    destination_name: "Yuzier".to_string(),
+                },
+            ]),
+        };
+        assert_eq!(system[0], target);
+    }
+
+    #[test]
+    fn search() {
+        let system: Vec<System> = system::search("tAn-O", None);
+        let target: System = System {
+            id: 30000001,
+            name: "Tanoo".to_string(),
+            security_status: 0.858324,
+            position: Position {
+                x: -8.85107925999806e+16,
+                y: 4.23694439668789e+16,
+                z: -4.45135253464797e+16,
+            },
+            constellation: Constellation {
+                id: 20000001,
+                name: "San Matar".to_string(),
+                region: Region {
+                    id: 10000001,
+                    name: "Derelik".to_string(),
+                    galaxy: Galaxy {
+                        id: 1,
+                        name: "NEW EDEN".to_string(),
+                    },
+                },
+            },
+            stargates: Vec::from([
+                Stargate {
+                    destination_id: 30000003,
+                    destination_name: "Akpivem".to_string(),
+                },
+                Stargate {
+                    destination_id: 30000005,
+                    destination_name: "Sasta".to_string(),
+                },
+                Stargate {
+                    destination_id: 30000007,
+                    destination_name: "Yuzier".to_string(),
+                },
+            ]),
+        };
+        assert_eq!(system[0], target);
+    }
+
+    #[test]
+    fn search_not_found() {
+        let system: Vec<System> = system::search("dsafasfa", None);
+        assert_eq!(system.len(), 0);
+    }
+
+    #[test]
+    fn search_under_3_chars() {
+        let system: Vec<System> = system::search("ta-", None);
+        assert_eq!(system.len(), 0);
+    }
 }

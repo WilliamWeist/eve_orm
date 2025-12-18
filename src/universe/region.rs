@@ -5,7 +5,7 @@ use rusqlite::Connection;
 use crate::connect_db;
 use crate::universe::galaxy::{self, Galaxy};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Region {
     pub id: u64,
     pub name: String,
@@ -116,6 +116,94 @@ pub fn get(id: &u64) -> Option<Region> {
     Some(region)
 }
 
-pub fn search(_name: &str) -> Option<Region> {
-    todo!()
+pub fn search(search_query: &str) -> Vec<Region> {
+    let mut regions: Vec<Region> = Vec::new();
+    let regions_map: HashMap<u64, Region> = get_all();
+    let search_query: &str = &search_query.to_lowercase().replace("-", "");
+    if search_query.chars().count() < 3 {
+        return regions;
+    }
+    for region_map in regions_map {
+        let region_name: &str = &region_map.1.name.to_lowercase().replace("-", "");
+        if region_name.starts_with(search_query) {
+            regions.push(region_map.1.clone());
+        }
+    }
+    regions.sort_by(|s1, s2| s1.name.cmp(&s2.name));
+
+    regions
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::universe::{
+        galaxy::Galaxy,
+        region::{self, Region},
+    };
+
+    #[test]
+    fn get_ok() {
+        let region: Option<Region> = region::get(&10000001);
+        assert_eq!(
+            region,
+            Some(Region {
+                id: 10000001,
+                name: "Derelik".to_string(),
+                galaxy: Galaxy {
+                    id: 1,
+                    name: "NEW EDEN".to_string()
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn get_none() {
+        let region: Option<Region> = region::get(&1321412421);
+        assert_eq!(region, None);
+    }
+
+    #[test]
+    fn search_exact() {
+        let region: Vec<Region> = region::search("Derelik");
+        assert_eq!(
+            region[0],
+            Region {
+                id: 10000001,
+                name: "Derelik".to_string(),
+                galaxy: Galaxy {
+                    id: 1,
+                    name: "NEW EDEN".to_string()
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn search() {
+        let region: Vec<Region> = region::search("dEr");
+        assert_eq!(
+            region[0],
+            Region {
+                id: 10000001,
+                name: "Derelik".to_string(),
+                galaxy: Galaxy {
+                    id: 1,
+                    name: "NEW EDEN".to_string()
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn search_not_found() {
+        let region: Vec<Region> = region::search("dsafasfa");
+        assert_eq!(region.len(), 0);
+    }
+
+    #[test]
+    fn search_under_3_chars() {
+        let region: Vec<Region> = region::search("DE-");
+        assert_eq!(region.len(), 0);
+    }
 }

@@ -5,7 +5,7 @@ use rusqlite::Connection;
 use crate::connect_db;
 use crate::universe::region::{self, Region};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Constellation {
     pub id: u64,
     pub name: String,
@@ -119,6 +119,107 @@ pub fn get(id: &u64) -> Option<Constellation> {
     Some(constellation)
 }
 
-pub fn search(_name: &str) -> Option<Constellation> {
-    todo!()
+pub fn search(search_query: &str) -> Vec<Constellation> {
+    let mut constellations: Vec<Constellation> = Vec::new();
+    let constellations_map: HashMap<u64, Constellation> = get_all();
+    let search_query: &str = &search_query.to_lowercase().replace("-", "");
+    if search_query.chars().count() < 3 {
+        return constellations;
+    }
+    for constellation_map in constellations_map {
+        let constellation_name: &str = &constellation_map.1.name.to_lowercase().replace("-", "");
+        if constellation_name.starts_with(search_query) {
+            constellations.push(constellation_map.1.clone());
+        }
+    }
+    constellations.sort_by(|s1, s2| s1.name.cmp(&s2.name));
+
+    constellations
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::universe::{
+        constellation::{self, Constellation},
+        galaxy::Galaxy,
+        region::Region,
+    };
+
+    #[test]
+    fn get_ok() {
+        let constellation: Option<Constellation> = constellation::get(&20000001);
+        assert_eq!(
+            constellation,
+            Some(Constellation {
+                id: 20000001,
+                name: "San Matar".to_string(),
+                region: Region {
+                    id: 10000001,
+                    name: "Derelik".to_string(),
+                    galaxy: Galaxy {
+                        id: 1,
+                        name: "NEW EDEN".to_string()
+                    }
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn get_none() {
+        let constellation: Option<Constellation> = constellation::get(&1321412421);
+        assert_eq!(constellation, None);
+    }
+
+    #[test]
+    fn search_exact() {
+        let constellation: Vec<Constellation> = constellation::search("San Matar");
+        assert_eq!(
+            constellation[0],
+            Constellation {
+                id: 20000001,
+                name: "San Matar".to_string(),
+                region: Region {
+                    id: 10000001,
+                    name: "Derelik".to_string(),
+                    galaxy: Galaxy {
+                        id: 1,
+                        name: "NEW EDEN".to_string()
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn search() {
+        let constellation: Vec<Constellation> = constellation::search("sAn m");
+        assert_eq!(
+            constellation[0],
+            Constellation {
+                id: 20000001,
+                name: "San Matar".to_string(),
+                region: Region {
+                    id: 10000001,
+                    name: "Derelik".to_string(),
+                    galaxy: Galaxy {
+                        id: 1,
+                        name: "NEW EDEN".to_string()
+                    }
+                }
+            }
+        );
+    }
+
+    #[test]
+    fn search_not_found() {
+        let constellation: Vec<Constellation> = constellation::search("dsafasfa");
+        assert_eq!(constellation.len(), 0);
+    }
+
+    #[test]
+    fn search_under_3_chars() {
+        let region: Vec<Constellation> = constellation::search("sa-");
+        assert_eq!(region.len(), 0);
+    }
 }

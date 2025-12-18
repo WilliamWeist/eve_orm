@@ -4,7 +4,7 @@ use rusqlite::Connection;
 
 use crate::connect_db;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Stargate {
     pub destination_id: u64,
     pub destination_name: String,
@@ -113,6 +113,33 @@ pub fn get(id: &u64) -> Vec<Stargate> {
     stargates
 }
 
-pub fn search(_name: &str) -> Option<Stargate> {
-    todo!()
+#[cfg(test)]
+mod tests {
+    use crate::universe::stargate::{self, Stargate};
+
+    #[test]
+    fn get_ok() {
+        let stargates: Vec<Stargate> = stargate::get(&30000001);
+        let target: Vec<Stargate> = Vec::from([
+            Stargate {
+                destination_id: 30000003,
+                destination_name: "Akpivem".to_string(),
+            },
+            Stargate {
+                destination_id: 30000005,
+                destination_name: "Sasta".to_string(),
+            },
+            Stargate {
+                destination_id: 30000007,
+                destination_name: "Yuzier".to_string(),
+            },
+        ]);
+        assert_eq!(stargates, target)
+    }
+
+    #[test]
+    fn get_none() {
+        let stargates: Vec<Stargate> = stargate::get(&1321412421);
+        assert_eq!(stargates.len(), 0);
+    }
 }
