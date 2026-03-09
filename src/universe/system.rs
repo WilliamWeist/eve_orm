@@ -13,7 +13,7 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct System {
-    pub id: u64,
+    pub id: i64,
     pub name: String,
     pub security_status: f64,
     pub position: Position,
@@ -21,10 +21,10 @@ pub struct System {
     pub stargates: Vec<Stargate>,
 }
 
-pub fn get_all() -> HashMap<u64, System> {
-    let constellations: HashMap<u64, Constellation> = constellation::get_all();
-    let stargates_map: HashMap<u64, Vec<Stargate>> = stargate::get_all();
-    let mut systems: HashMap<u64, System> = HashMap::new();
+pub fn get_all() -> HashMap<i64, System> {
+    let constellations: HashMap<i64, Constellation> = constellation::get_all();
+    let stargates_map: HashMap<i64, Vec<Stargate>> = stargate::get_all();
+    let mut systems: HashMap<i64, System> = HashMap::new();
     let connection: Connection = connect_db();
     let mut stmt;
     match connection.prepare(
@@ -37,7 +37,7 @@ pub fn get_all() -> HashMap<u64, System> {
              position.z AS z,
              system.constellation_id
             FROM system
-            INNER JOIN name ON system.id = name.entity_id
+            INNER JOIN name ON system.id = name.system_id
             INNER JOIN position ON system.id = position.entity_id;",
     ) {
         Ok(result) => stmt = result,
@@ -45,7 +45,7 @@ pub fn get_all() -> HashMap<u64, System> {
     }
     let systems_iter;
     match stmt.query_map(rusqlite::params![], |row| {
-        let id: u64;
+        let id: i64;
         match row.get(0) {
             Ok(value) => id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -75,7 +75,7 @@ pub fn get_all() -> HashMap<u64, System> {
             Ok(value) => z = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
         }
-        let constellation_id: u64;
+        let constellation_id: i64;
         match row.get(6) {
             Ok(value) => constellation_id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -112,7 +112,7 @@ pub fn get_all() -> HashMap<u64, System> {
     systems
 }
 
-pub fn get(id: &u64) -> Option<System> {
+pub fn get(id: &i64) -> Option<System> {
     let system: System;
     let connection: Connection = connect_db();
     let mut stmt;
@@ -165,7 +165,7 @@ pub fn get(id: &u64) -> Option<System> {
                     Ok(value) => z = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
                 }
-                let constellation_id: u64;
+                let constellation_id: i64;
                 match row.get(5) {
                     Ok(value) => constellation_id = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -195,9 +195,9 @@ pub fn get(id: &u64) -> Option<System> {
     Some(system)
 }
 
-pub fn search(search_query: &str, cache: Option<&HashMap<u64, System>>) -> Vec<System> {
+pub fn search(search_query: &str, cache: Option<&HashMap<i64, System>>) -> Vec<System> {
     let mut systems: Vec<System> = Vec::new();
-    let systems_map: HashMap<u64, System>;
+    let systems_map: HashMap<i64, System>;
     match cache {
         Some(cache) => systems_map = cache.clone(),
         None => systems_map = get_all(),

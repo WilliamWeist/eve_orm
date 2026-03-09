@@ -8,7 +8,8 @@ pub mod universe;
 pub(crate) const EVE_DB_FILE: &str = "EVE.db";
 
 pub fn update_database() {
-    sde2sqlite::update();
+    let verbose: bool = true;
+    sde2sqlite::update(verbose).unwrap();
 }
 
 pub(crate) fn connect_db() -> Connection {

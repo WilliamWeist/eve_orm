@@ -5,12 +5,12 @@ use rusqlite::{Connection, Statement};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Galaxy {
-    pub id: u64,
+    pub id: i64,
     pub name: String,
 }
 
-pub fn get_all() -> HashMap<u64, Galaxy> {
-    let mut galaxies: HashMap<u64, Galaxy> = HashMap::new();
+pub fn get_all() -> HashMap<i64, Galaxy> {
+    let mut galaxies: HashMap<i64, Galaxy> = HashMap::new();
     let connection: Connection = connect_db();
     let mut stmt: Statement<'_>;
     match connection.prepare(
@@ -24,7 +24,7 @@ pub fn get_all() -> HashMap<u64, Galaxy> {
     }
     let galaxies_iter;
     match stmt.query_map(rusqlite::params![], |row| {
-        let id: u64;
+        let id: i64;
         match row.get(0) {
             Ok(value) => id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -49,7 +49,7 @@ pub fn get_all() -> HashMap<u64, Galaxy> {
     galaxies
 }
 
-pub fn get(id: &u64) -> Option<Galaxy> {
+pub fn get(id: &i64) -> Option<Galaxy> {
     let galaxy: Galaxy;
     let connection: Connection = connect_db();
     let mut stmt: Statement<'_>;
@@ -87,7 +87,7 @@ pub fn get(id: &u64) -> Option<Galaxy> {
 
 pub fn search(search_query: &str) -> Vec<Galaxy> {
     let mut galaxies: Vec<Galaxy> = Vec::new();
-    let galaxies_map: HashMap<u64, Galaxy> = get_all();
+    let galaxies_map: HashMap<i64, Galaxy> = get_all();
     let search_query: &str = &search_query.to_lowercase().replace("-", "");
     if search_query.chars().count() < 3 {
         return galaxies;

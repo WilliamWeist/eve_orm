@@ -7,14 +7,14 @@ use crate::universe::region::{self, Region};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Constellation {
-    pub id: u64,
+    pub id: i64,
     pub name: String,
     pub region: Region,
 }
 
-pub fn get_all() -> HashMap<u64, Constellation> {
-    let regions: HashMap<u64, Region> = region::get_all();
-    let mut constellations: HashMap<u64, Constellation> = HashMap::new();
+pub fn get_all() -> HashMap<i64, Constellation> {
+    let regions: HashMap<i64, Region> = region::get_all();
+    let mut constellations: HashMap<i64, Constellation> = HashMap::new();
     let connection: Connection = connect_db();
     let mut stmt;
     match connection.prepare(
@@ -23,14 +23,14 @@ pub fn get_all() -> HashMap<u64, Constellation> {
              name.en AS name,
              constellation.region_id
             FROM constellation
-            INNER JOIN name ON constellation.id = name.entity_id;",
+            INNER JOIN name ON constellation.id = name.constellation_id;",
     ) {
         Ok(result) => stmt = result,
         Err(error) => panic!("ERROR when preparing query statement: {:#?}", error),
     }
     let constellations_iter;
     match stmt.query_map(rusqlite::params![], |row| {
-        let id: u64;
+        let id: i64;
         match row.get(0) {
             Ok(value) => id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -40,7 +40,7 @@ pub fn get_all() -> HashMap<u64, Constellation> {
             Ok(value) => name = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
         }
-        let region_id: u64;
+        let region_id: i64;
         match row.get(2) {
             Ok(value) => region_id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -65,7 +65,7 @@ pub fn get_all() -> HashMap<u64, Constellation> {
     constellations
 }
 
-pub fn get(id: &u64) -> Option<Constellation> {
+pub fn get(id: &i64) -> Option<Constellation> {
     let constellation: Constellation;
     let connection: Connection = connect_db();
     let mut stmt;
@@ -93,7 +93,7 @@ pub fn get(id: &u64) -> Option<Constellation> {
                     Ok(value) => name = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
                 }
-                let region_id: u64;
+                let region_id: i64;
                 match row.get(1) {
                     Ok(value) => region_id = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -121,7 +121,7 @@ pub fn get(id: &u64) -> Option<Constellation> {
 
 pub fn search(search_query: &str) -> Vec<Constellation> {
     let mut constellations: Vec<Constellation> = Vec::new();
-    let constellations_map: HashMap<u64, Constellation> = get_all();
+    let constellations_map: HashMap<i64, Constellation> = get_all();
     let search_query: &str = &search_query.to_lowercase().replace("-", "");
     if search_query.chars().count() < 3 {
         return constellations;

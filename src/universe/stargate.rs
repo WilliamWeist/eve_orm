@@ -6,12 +6,12 @@ use crate::connect_db;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Stargate {
-    pub destination_id: u64,
+    pub destination_id: i64,
     pub destination_name: String,
 }
 
-pub fn get_all() -> HashMap<u64, Vec<Stargate>> {
-    let mut stargates_map: HashMap<u64, Vec<Stargate>> = HashMap::new();
+pub fn get_all() -> HashMap<i64, Vec<Stargate>> {
+    let mut stargates_map: HashMap<i64, Vec<Stargate>> = HashMap::new();
     let connection: Connection = connect_db();
     let mut stmt;
     match connection.prepare(
@@ -26,12 +26,12 @@ pub fn get_all() -> HashMap<u64, Vec<Stargate>> {
     }
     let stargates_iter;
     match stmt.query_map(rusqlite::params![], |row| {
-        let from_system_id: u64;
+        let from_system_id: i64;
         match row.get(0) {
             Ok(value) => from_system_id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
         }
-        let destination_id: u64;
+        let destination_id: i64;
         match row.get(1) {
             Ok(value) => destination_id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -70,7 +70,7 @@ pub fn get_all() -> HashMap<u64, Vec<Stargate>> {
     stargates_map
 }
 
-pub fn get(id: &u64) -> Vec<Stargate> {
+pub fn get(id: &i64) -> Vec<Stargate> {
     let mut stargates: Vec<Stargate> = Vec::new();
     let connection: Connection = connect_db();
     let mut stmt;
@@ -86,7 +86,7 @@ pub fn get(id: &u64) -> Vec<Stargate> {
     }
     let stargates_iter;
     match stmt.query_map(rusqlite::params![id], |row| {
-        let destination_id: u64;
+        let destination_id: i64;
         match row.get(0) {
             Ok(value) => destination_id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),

@@ -7,14 +7,14 @@ use crate::universe::galaxy::{self, Galaxy};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Region {
-    pub id: u64,
+    pub id: i64,
     pub name: String,
     pub galaxy: Galaxy,
 }
 
-pub fn get_all() -> HashMap<u64, Region> {
-    let galaxies: HashMap<u64, Galaxy> = galaxy::get_all();
-    let mut regions: HashMap<u64, Region> = HashMap::new();
+pub fn get_all() -> HashMap<i64, Region> {
+    let galaxies: HashMap<i64, Galaxy> = galaxy::get_all();
+    let mut regions: HashMap<i64, Region> = HashMap::new();
     let connection: Connection = connect_db();
     let mut stmt;
     match connection.prepare(
@@ -23,14 +23,14 @@ pub fn get_all() -> HashMap<u64, Region> {
              name.en AS name,
              region.galaxy_id
             FROM region
-            INNER JOIN name ON region.id = name.entity_id;",
+            INNER JOIN name ON region.id = name.region_id;",
     ) {
         Ok(result) => stmt = result,
         Err(error) => panic!("ERROR when preparing query statement: {:#?}", error),
     }
     let regions_iter;
     match stmt.query_map(rusqlite::params![], |row| {
-        let id: u64;
+        let id: i64;
         match row.get(0) {
             Ok(value) => id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -40,7 +40,7 @@ pub fn get_all() -> HashMap<u64, Region> {
             Ok(value) => name = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
         }
-        let galaxy_id: u64;
+        let galaxy_id: i64;
         match row.get(2) {
             Ok(value) => galaxy_id = value,
             Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -65,7 +65,7 @@ pub fn get_all() -> HashMap<u64, Region> {
     regions
 }
 
-pub fn get(id: &u64) -> Option<Region> {
+pub fn get(id: &i64) -> Option<Region> {
     let region: Region;
     let connection: Connection = connect_db();
     let mut stmt;
@@ -93,7 +93,7 @@ pub fn get(id: &u64) -> Option<Region> {
                     Ok(value) => name = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
                 }
-                let galaxy_id: u64;
+                let galaxy_id: i64;
                 match row.get(1) {
                     Ok(value) => galaxy_id = value,
                     Err(error) => panic!("ERROR when retrieving value: {:#?}", error),
@@ -118,7 +118,7 @@ pub fn get(id: &u64) -> Option<Region> {
 
 pub fn search(search_query: &str) -> Vec<Region> {
     let mut regions: Vec<Region> = Vec::new();
-    let regions_map: HashMap<u64, Region> = get_all();
+    let regions_map: HashMap<i64, Region> = get_all();
     let search_query: &str = &search_query.to_lowercase().replace("-", "");
     if search_query.chars().count() < 3 {
         return regions;
